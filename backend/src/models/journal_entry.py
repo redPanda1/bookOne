@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import CheckConstraint, Index, String, Uuid
@@ -34,6 +34,8 @@ class JournalEntry(TimestampMixin, Base):
     source_type: Mapped[str | None] = mapped_column(String(64))
     source_reference: Mapped[str | None] = mapped_column(String(128))
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft", server_default="draft")
+    posted_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    posted_by: Mapped[str | None] = mapped_column(String(255))
 
     lines: Mapped[list["JournalLine"]] = relationship(
         back_populates="journal_entry",

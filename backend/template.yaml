@@ -1,6 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: BookOne backend SAM scaffold (Phase 0)
+Description: BookOne backend — API Gateway HTTP API + Lambda (dev/prod parameter-driven)
+
+Conditions:
+  HasVpcConfig: !And
+    - !Not [!Equals [!Ref VpcSubnetIds, ""]]
+    - !Not [!Equals [!Ref VpcSecurityGroupIds, ""]]
 
 Globals:
   Function:
@@ -14,12 +19,14 @@ Globals:
         DB_NAME: !Ref DbName
         DB_USER: !Ref DbUser
         DB_PASSWORD: !Ref DbPassword
+        DB_SSL_MODE: !Ref DbSslMode
         COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
         COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
 
 Parameters:
   DbHost:
     Type: String
+    Description: Aurora/PostgreSQL hostname (cluster endpoint or proxy).
     Default: "aurora-host-placeholder"
   DbPort:
     Type: String
@@ -34,24 +41,69 @@ Parameters:
     Type: String
     Default: "change-me"
     NoEcho: true
+  DbSslMode:
+    Type: String
+    Default: "require"
+    Description: psycopg/sslmode for RDS/Aurora (use require or stricter in AWS).
+    AllowedValues:
+      - disable
+      - allow
+      - prefer
+      - require
+      - verify-ca
+      - verify-full
   CognitoUserPoolId:
     Type: String
     Default: "us-east-1_placeholder"
   CognitoAppClientId:
     Type: String
     Default: "placeholder-client-id"
+  CorsAllowOrigins:
+    Type: CommaDelimitedList
+    Default: "*"
+    Description: Allowed CORS origins for the HTTP API (use specific origins for production).
+  VpcSubnetIds:
+    Type: String
+    Default: ""
+    Description: >-
+      Comma-separated private subnet IDs for Lambda VPC access (no spaces).
+      Leave empty to deploy without VPC (only if the database is reachable without VPC Lambda).
+  VpcSecurityGroupIds:
+    Type: String
+    Default: ""
+    Description: >-
+      Comma-separated security group IDs for Lambda (no spaces). Required when subnets are set.
+      The SG must allow outbound TCP to the database on DbPort.
 
 Resources:
   BookOneHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: "$default"
+      CorsConfiguration:
+        AllowCredentials: false
+        AllowHeaders:
+          - authorization
+          - content-type
+        AllowMethods:
+          - GET
+          - POST
+          - PATCH
+          - OPTIONS
+        AllowOrigins: !Ref CorsAllowOrigins
 
   BookOneApiFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src
       Handler: handlers.app.lambda_handler
+      Policies:
+        - AWSLambdaVPCAccessExecutionRole
+      VpcConfig: !If
+        - HasVpcConfig
+        - SubnetIds: !Split [",", !Ref VpcSubnetIds]
+          SecurityGroupIds: !Split [",", !Ref VpcSecurityGroupIds]
+        - !Ref AWS::NoValue
       Events:
         RootRoute:
           Type: HttpApi

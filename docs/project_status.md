@@ -16,8 +16,8 @@ Purpose:
 # Current Overall Status
 
 **Current Active Phase:** Phase 1B — Core Ledger: Journal Entry Backend
-**Overall Progress:** 31%
-**Last Updated:** 2026-04-14
+**Overall Progress:** 42%
+**Last Updated:** 2026-04-15
 
 ---
 
@@ -69,22 +69,25 @@ Purpose:
 
 ## Phase 1B — Core Ledger: Journal Entry Backend
 
-**Status:** ⚪ Not Started
+**Status:** ✅ Completed
 
 ### Work Packages
 
-* [ ] Journal Entry schema complete
-* [ ] Draft JE creation
-* [ ] Draft JE update
-* [ ] JE post logic
-* [ ] Balancing validation
-* [ ] Reverse JE logic
-* [ ] Audit logging complete
-* [ ] Tests complete
+* [x] Journal Entry schema complete
+* [x] Draft JE creation
+* [x] Draft JE update
+* [x] JE post logic
+* [x] Balancing validation
+* [x] Reverse JE logic (scaffolded)
+* [x] Audit logging complete
+* [x] Tests complete
 
 ### Notes
 
-* Build Note: *Pending*
+* Build Note: `/docs/build_notes/phase1b_journal_workflow_services_and_apis.md`
+* Draft journals are fully editable; posted journals are immutable in service-layer workflow.
+* Posting now records `posted_at`/`posted_by` and writes one audit history event atomically with status transition.
+* `PATCH /journal-entries/{id}` replaces the entire line set when `lines` is included.
 
 ---
 
@@ -251,12 +254,12 @@ These should be preserved throughout implementation:
 
 # Immediate Next Recommended Task
 
-**Start Phase 1B — Core Ledger: Journal Entry Backend**
+**Start Phase 1C — Core Ledger: Journal Entry Frontend**
 
-* Add service-layer JE draft/post validation (balanced-entry + allowed status transitions)
-* Add JE workflow endpoints (`POST/PATCH /journal-entries`, `POST /journal-entries/{id}/post`)
-* Add transactional posting behavior and audit insert in one DB transaction
-* Add tests for JE balance validation and posting invariants
+* Build JE draft/edit/post UI flows against new Phase 1B backend endpoints.
+* Add client-side line replacement UX and balancing indicators before posting.
+* Surface posted immutability behavior and workflow errors clearly in UI.
+* Add integration tests that validate frontend-to-backend journal workflow lifecycle.
 
 ---
 
@@ -277,6 +280,9 @@ Future development agents should:
 * Alembic revisions are used for forward/backward relational schema control.
 * Repository layer moved to class-based abstractions with tenant-scoped access patterns.
 * `GET /health/db` requires authentication and executes a lightweight `SELECT 1`.
+* Journal workflow business rules now live in `JournalEntryService` (draft create/update + post + reversal scaffold).
+* Journal posting is a single transaction that updates status metadata and inserts one audit history row.
+* Handler layer now exposes Phase 1B JE workflow endpoints: `POST /journal-entries`, `PATCH /journal-entries/{id}`, `POST /journal-entries/{id}/post`.
 
 ---
 
@@ -284,6 +290,7 @@ Future development agents should:
 
 * No external blockers.
 * Migration compatibility note: initial Phase 1A Alembic revision conditionally replaces prior Phase 0 `journal_entries`/`journal_lines` structures to align with new model shape.
+* JWT validation remains scaffold-level (mock/unverified decode); production Cognito/JWKS validation is still pending.
 
 ---
 
@@ -336,5 +343,49 @@ Future development agents should:
 
 * No SAM resource changes in this phase.
 * Migration execution standard updated to Alembic for Aurora/PostgreSQL schema lifecycle.
+
+---
+
+# Implementation Notes (Phase 1B)
+
+### Files Created
+
+* `backend/alembic/versions/20260415_01_phase1b_journal_workflow.py`
+* `backend/src/models/journal_entry_audit_history.py`
+* `backend/src/services/journal_entry_service.py`
+* `backend/tests/test_journal_workflow.py`
+* `docs/build_notes/phase1b_journal_workflow_services_and_apis.md`
+
+### Files Modified
+
+* `backend/src/handlers/app.py`
+* `backend/src/models/journal_entry.py`
+* `backend/src/models/__init__.py`
+* `backend/src/repositories/journal_repository.py`
+* `backend/src/repositories/ledger_account_repository.py`
+* `backend/src/services/__init__.py`
+* `docs/project_status.md`
+* `docs/bookone_core_accounting_data_model.md`
+* `docs/bookone_system_architecture_api.md`
+* `backend/README.md`
+
+### Assumptions / Temporary Compromises
+
+* Reversal workflow is intentionally scaffolded in service layer and not yet executable.
+* Posting audit is implemented as a journal-entry-specific history table instead of a broader generic audit framework.
+* Existing error envelope style (`{"message": "..."}`) is preserved for handler responses.
+
+### Known Follow-Up Items / Technical Debt
+
+* Replace scaffold JWT decode behavior with verified Cognito/JWKS validation.
+* Introduce accounting period state checks (open/closed) into posting and editing validation.
+* Add authorization/permission checks for JE workflow actions.
+* Consider replacing legacy raw SQL `journal_entries.py` skeleton to avoid model drift.
+
+### Recommended Phase 1C Dependencies
+
+* Frontend JE forms should treat line edits as full replacement semantics for PATCH.
+* Frontend must respect posted immutability and consume 409/400 workflow errors.
+* UI should expose audit/post metadata (`posted_at`, `posted_by`) where appropriate.
 
 ---

@@ -155,6 +155,7 @@ POST /imported-transactions/{id}/ignore
 ### Journal Entries
 GET /journal-entries  
 POST /journal-entries  
+PATCH /journal-entries/{id}  
 POST /journal-entries/{id}/post  
 POST /journal-entries/{id}/reverse  
 

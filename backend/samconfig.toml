@@ -1,0 +1,27 @@
+# SAM CLI defaults for BookOne backend (no secrets here).
+# Override region/stack or pass --parameter-overrides at deploy time.
+# See docs/deployment.md
+
+version = 0.1
+
+[default]
+[default.global.parameters]
+stack_name = "bookone-backend-dev"
+region = "us-east-1"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+# region: set explicitly, e.g. `sam deploy --region us-east-1` or uncomment:
+# region = "us-east-1"
+s3_prefix = "bookone-backend-dev"
+parameter_overrides = "DbHost=\"bookone-dev-cluster2.cluster-cw4benq7uwd8.us-east-1.rds.amazonaws.com\" DbPort=\"5432\" DbName=\"bookone\" DbUser=\"postgres\" DbSslMode=\"verify-full\" CognitoUserPoolId=\"us-east-1_ebdxKl1Mb\" CognitoAppClientId=\"2fr36fcgu1cj02utsbfavqcn1m\" CorsAllowOrigins=\"*\" VpcSubnetIds=\"subnet-a99073de,subnet-21a62d2d,subnet-6b818c2d,subnet-d76945ff,subnet-187c1c22,subnet-219df444\" VpcSecurityGroupIds=\"sg-de9e14bb\""
+image_repositories = []

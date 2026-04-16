@@ -59,6 +59,10 @@ backend/
 
 - `GET /session`
 - `GET /health/db` (protected)
+- `POST /gl-accounts` (protected)
+- `POST /journal-entries` (protected)
+- `PATCH /journal-entries/{id}` (protected)
+- `POST /journal-entries/{id}/post` (protected)
 
 ## Prerequisites
 

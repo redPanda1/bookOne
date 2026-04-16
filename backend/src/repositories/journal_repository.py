@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
 
 from models.journal_entry import JournalEntry
+from models.journal_entry_audit_history import JournalEntryAuditHistory
 from models.journal_line import JournalLine
 from repositories.base_repository import BaseRepository
 
@@ -54,3 +56,41 @@ class JournalRepository(BaseRepository[JournalEntry]):
 
         stmt = stmt.order_by(self.model.entry_date.desc(), self.model.journal_number.desc())
         return list(self.session.scalars(stmt).all())
+
+    def replace_lines(
+        self,
+        journal_entry: JournalEntry,
+        lines_payload: list[dict[str, Any]],
+    ) -> JournalEntry:
+        """Replace all lines for one journal entry."""
+        journal_entry.lines = [JournalLine(**line_payload) for line_payload in lines_payload]
+        self.session.flush()
+        self.session.refresh(journal_entry)
+        return journal_entry
+
+    def insert_audit_history(
+        self,
+        *,
+        organization_id: UUID,
+        entity_id: UUID,
+        action: str,
+        from_status: str,
+        to_status: str,
+        performed_by: str,
+        metadata_json: dict[str, Any] | None = None,
+    ) -> JournalEntryAuditHistory:
+        """Insert one journal-entry audit history event row."""
+        history_row = JournalEntryAuditHistory(
+            organization_id=organization_id,
+            entity_type="journal_entry",
+            entity_id=entity_id,
+            action=action,
+            from_status=from_status,
+            to_status=to_status,
+            performed_by=performed_by,
+            metadata_json=metadata_json,
+        )
+        self.session.add(history_row)
+        self.session.flush()
+        self.session.refresh(history_row)
+        return history_row

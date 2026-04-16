@@ -140,6 +140,8 @@
 | description | TEXT |
 | source_type | ENUM |
 | source_id | UUID |
+| posted_at | TIMESTAMP |
+| posted_by | VARCHAR |
 | created_at | TIMESTAMP |
 | updated_at | TIMESTAMP |
 
@@ -234,6 +236,20 @@
   - `status`
 - `JournalLine` includes `line_order`, debit/credit precision (`NUMERIC(18,2)`), and single-sided amount constraints.
 - Alembic migration `20260414_01_phase1a_core_database_foundation` is the source of truth for this initial relational foundation.
+
+---
+
+## 11. Phase 1B Implementation Notes (2026-04-15)
+
+- Added workflow metadata to `JournalEntry`:
+  - `posted_at`
+  - `posted_by`
+- Added `JournalEntryAuditHistory` model/table to capture posted transition events.
+- Service-layer journal workflow now enforces:
+  - draft-only edit/post transitions
+  - minimum line count and debit-credit balancing at post time
+  - ledger account org/active validation for posting
+- Posting now commits status transition metadata and audit row in one transaction boundary.
 
 ---
 

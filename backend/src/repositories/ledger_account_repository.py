@@ -32,3 +32,22 @@ class LedgerAccountRepository(BaseRepository[LedgerAccount]):
 
         stmt = stmt.order_by(self.model.account_code.asc())
         return list(self.session.scalars(stmt).all())
+
+    def get_by_ids(
+        self,
+        organization_id: UUID,
+        account_ids: set[UUID],
+        *,
+        include_inactive: bool = False,
+    ) -> list[LedgerAccount]:
+        """Return accounts by ids scoped to an organization."""
+        if not account_ids:
+            return []
+
+        stmt = select(self.model).where(
+            self.model.organization_id == organization_id,
+            self.model.id.in_(account_ids),
+        )
+        if not include_inactive:
+            stmt = stmt.where(self.model.is_active.is_(True))
+        return list(self.session.scalars(stmt).all())
