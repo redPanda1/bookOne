@@ -2,10 +2,11 @@
 
 ## Overview
 
-This document provides a detailed, execution-ready plan for the first three phases of BookOne:
+This document provides a detailed, execution-ready plan for the first MVP phases of BookOne:
 
 - Phase 0 — Foundation
 - Phase 1 — Core Ledger
+- Phase 1D — Authentication Foundation
 - Phase 2 — Reporting
 
 The goal is to move from zero to a functioning accounting system with reporting.
@@ -189,6 +190,53 @@ User can:
 
 ---
 
+# Phase 1D — Authentication Foundation
+
+## Goal
+Replace the development bearer-token scaffold with real Cognito-backed authentication before expanding protected accounting workflows.
+
+---
+
+## Frontend
+
+- Build a real login screen for Cognito username/password sign-in.
+- Preserve the Phase 1C React Router protected route structure.
+- Preserve the shared Axios API client and `ApiResult<T>` thunk pattern.
+- Store token material only for the browser session.
+- Keep user and organization metadata in Redux memory, hydrated through `GET /session`.
+- Wire the Axios 401 runtime hook to attempt token refresh once and retry the original request.
+- Clear auth state and show a session-expired message only when refresh fails.
+
+---
+
+## Backend / API
+
+- Replace scaffold JWT decode/mock fallback with verified Cognito/JWKS validation or API Gateway HTTP API JWT authorizer claims.
+- Keep `GET /session` as the normalized frontend bootstrap endpoint.
+- Map Cognito claims to `user.id`, `user.email`, `organization.id`, and `organization.name`.
+- Return consistent `401` responses for missing, expired, invalid, or unverifiable tokens.
+- Keep tenant scoping tied to verified organization context.
+
+---
+
+## Configuration
+
+- Document required Cognito User Pool, App Client, issuer, region, and audience/client-id settings.
+- Add frontend `.env.example` entries for Cognito configuration.
+- Add backend environment variables for issuer/audience/JWKS validation if validation is performed in Lambda.
+
+---
+
+## Milestone
+
+User can:
+- sign in with a Cognito username and password
+- refresh an expired access token without losing the current page
+- be redirected to login when refresh fails
+- access protected backend endpoints only with verified Cognito identity
+
+---
+
 # Phase 2 — Reporting
 
 ## Goal
@@ -265,13 +313,15 @@ User can:
 ## Week 1
 - backend scaffold
 - DB setup
-- auth wiring
+- auth scaffold
 
 ## Week 2
 - Journal Entry backend
-- basic JE UI
+- frontend shell
+- real Cognito authentication
 
 ## Week 3
+- Journal Entry UI
 - Chart of Accounts UI
 - validations
 

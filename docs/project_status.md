@@ -15,9 +15,9 @@ Purpose:
 
 # Current Overall Status
 
-**Current Active Phase:** Phase 1B — Core Ledger: Journal Entry Backend
-**Overall Progress:** 42%
-**Last Updated:** 2026-04-15
+**Current Active Phase:** Phase 1D — Authentication Foundation
+**Overall Progress:** 52%
+**Last Updated:** 2026-04-17
 
 ---
 
@@ -88,25 +88,60 @@ Purpose:
 * Draft journals are fully editable; posted journals are immutable in service-layer workflow.
 * Posting now records `posted_at`/`posted_by` and writes one audit history event atomically with status transition.
 * `PATCH /journal-entries/{id}` replaces the entire line set when `lines` is included.
+* AWS deployment verified with `GET /health/db` returning `200` against Aurora cluster `bookone-dev-cluster2`.
 
 ---
 
-## Phase 1C — Core Ledger: Journal Entry Frontend
+## Phase 1C — Frontend Shell Foundation
+
+**Status:** ✅ Completed
+
+### Work Packages
+
+* [x] React + Vite + TypeScript frontend scaffold
+* [x] MUI theme scaffold using BookOne palette and Onest font
+* [x] Redux Toolkit store foundation with typed hooks
+* [x] Auth slice with development bearer-token login scaffold
+* [x] `sessionStorage` token persistence with Redux-memory session metadata
+* [x] React Router public/protected route structure
+* [x] Authenticated application shell with sidebar/top bar/content area
+* [x] Shared API client with typed result/error convention
+* [x] Dashboard/home page
+* [x] Protected system health page calling `GET /health/db`
+* [x] Common page/card/loading/error/empty-state components
+* [x] Redux-backed MUI status notifications
+* [x] Page layouts using MUI v9 Grid for responsive shells (`PageContainer`, dashboard, login, theme reference); AppShell remains flex-based
+* [x] Frontend tests/build/lint/typecheck validation
+
+### Notes
+
+* Build Note: `/docs/build_notes/phase1c_frontend_shell_foundation.md`
+* Phase 1C deliberately does not implement journal-entry CRUD screens.
+* Frontend auth remains a truthful development-token scaffold until Cognito sign-in/token refresh is implemented.
+* The Axios 401 runtime hook is deliberately reserved for Phase 1D token refresh handling.
+
+---
+
+## Phase 1D — Authentication Foundation
 
 **Status:** ⚪ Not Started
 
 ### Work Packages
 
-* [ ] JE list page
-* [ ] JE edit page
-* [ ] Line editor UI
-* [ ] Balance indicator
-* [ ] Post/draft controls
-* [ ] Validation UX
+* [ ] Replace development bearer-token login with Cognito username/password sign-in
+* [ ] Add frontend Cognito configuration and documentation
+* [ ] Store browser-session token material without persisting user/organization metadata
+* [ ] Wire Axios 401 runtime hook to refresh tokens and retry once
+* [ ] Clear auth state and show session-expired messaging when refresh fails
+* [ ] Replace backend mock/unverified JWT scaffold with Cognito/JWKS validation or API Gateway authorizer claims
+* [ ] Preserve `GET /session` as the normalized user/organization bootstrap endpoint
+* [ ] Add focused frontend and backend auth tests
 
 ### Notes
 
 * Build Note: *Pending*
+* Agent Prompt: `/docs/agent_prompts/phase1d_authentication.md`
+* Journal-entry list/edit/post UI should wait until real authentication is in place.
 
 ---
 
@@ -254,12 +289,12 @@ These should be preserved throughout implementation:
 
 # Immediate Next Recommended Task
 
-**Start Phase 1C — Core Ledger: Journal Entry Frontend**
+**Start Phase 1D — Authentication Foundation**
 
-* Build JE draft/edit/post UI flows against new Phase 1B backend endpoints.
-* Add client-side line replacement UX and balancing indicators before posting.
-* Surface posted immutability behavior and workflow errors clearly in UI.
-* Add integration tests that validate frontend-to-backend journal workflow lifecycle.
+* Implement Cognito username/password login.
+* Implement token refresh through the existing Axios 401 runtime hook.
+* Replace scaffold backend JWT mock/decode behavior with verified Cognito identity handling.
+* Keep the Phase 1C shell, API client, route guard, and Redux conventions intact.
 
 ---
 
@@ -283,6 +318,8 @@ Future development agents should:
 * Journal workflow business rules now live in `JournalEntryService` (draft create/update + post + reversal scaffold).
 * Journal posting is a single transaction that updates status metadata and inserts one audit history row.
 * Handler layer now exposes Phase 1B JE workflow endpoints: `POST /journal-entries`, `PATCH /journal-entries/{id}`, `POST /journal-entries/{id}/post`.
+* Frontend Phase 1C uses React/Vite/TypeScript, Redux Toolkit thunks, React Router protected routes, an Axios-based shared typed API client, MUI theme primitives, and Onest typography.
+* Phase 1D is now the required bridge between the frontend shell and protected accounting UI work.
 
 ---
 
@@ -290,7 +327,8 @@ Future development agents should:
 
 * No external blockers.
 * Migration compatibility note: initial Phase 1A Alembic revision conditionally replaces prior Phase 0 `journal_entries`/`journal_lines` structures to align with new model shape.
-* JWT validation remains scaffold-level (mock/unverified decode); production Cognito/JWKS validation is still pending.
+* JWT validation remains scaffold-level (mock/unverified decode); Phase 1D must replace this before protected accounting UI expands.
+* Frontend login intentionally uses a development bearer-token scaffold until Phase 1D Cognito sign-in is implemented.
 
 ---
 

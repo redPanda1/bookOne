@@ -110,6 +110,12 @@ Redux slices:
 - reconciliation
 - syncJobs
 
+Phase 1C frontend state conventions:
+- Redux Toolkit slices and `createAsyncThunk` are the default async pattern.
+- RTK Query is not used for MVP frontend work.
+- Auth token persistence is limited to `sessionStorage`; user and organization metadata are rehydrated from `/session` and kept in memory.
+- Frontend API calls use a shared Axios-based typed client that normalizes backend success and error responses before thunks consume them.
+
 ---
 
 ## 12. Optimistic UI
@@ -195,6 +201,8 @@ GET /reports/balance-sheet
 - org-level scoping
 - parameterized queries
 - secure secret storage
+
+Current frontend authentication is a development bearer-token scaffold. Phase 1D replaces this with Cognito username/password sign-in, token refresh through the shared Axios 401 hook, and verified backend JWT/JWKS validation or API Gateway authorizer claims.
 
 ---
 
